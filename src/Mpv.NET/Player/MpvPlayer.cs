@@ -464,8 +464,9 @@ namespace Mpv.NET.Player
 
 		private readonly string[] possibleLibMpvPaths = new string[]
 		{
-			"mpv-1.dll",
-			@"lib\mpv-1.dll"
+			"mpv-2.dll",
+			@"lib\mpv-2.dll",
+			@"NativeLibs\mpv-2.dll"
 		};
 
 		private readonly string[] possibleYtdlHookPaths = new string[]
@@ -518,6 +519,12 @@ namespace Mpv.NET.Player
 			Initialise();
 		}
 
+		public MpvPlayer(string libMpvPath, bool render)
+        {
+			LibMpvPath = libMpvPath;
+			InitialiseRender();
+		}
+
 		private void Initialise()
 		{
 			// Initialise the API.
@@ -541,6 +548,25 @@ namespace Mpv.NET.Player
 				SetMpvHost(hwnd);
 		}
 
+		private void InitialiseRender()
+        {
+			// Initialise the API.
+			if (!string.IsNullOrEmpty(LibMpvPath))
+				InitialiseMpvRender(LibMpvPath);
+			else
+			{
+				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
+				if (foundPath != null)
+					InitialiseMpvRender(foundPath);
+				else
+					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
+			}
+
+			// Set defaults.
+			Volume = 50;
+			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
+		}
+
 		private void InitialiseMpv(string libMpvPath)
 		{
 			mpv = new API.Mpv(libMpvPath);
@@ -560,7 +586,26 @@ namespace Mpv.NET.Player
 			mpv.ObserveProperty("paused-for-cache", MpvFormat.String, pausedForCacheUserData);
 		}
 
-		private void SetMpvHost(IntPtr hwnd)
+		private void InitialiseMpvRender(string libMpvPath)
+        {
+			mpv = new API.Mpv(libMpvPath, true);
+
+			mpv.LogMessage += MpvOnLogMessage;
+
+			mpv.PlaybackRestart += MpvOnPlaybackRestart;
+			mpv.Seek += MpvOnSeek;
+
+			mpv.FileLoaded += MpvOnFileLoaded;
+			mpv.EndFile += MpvOnEndFile;
+
+			mpv.PropertyChange += MpvOnPropertyChange;
+
+			mpv.ObserveProperty("pause", MpvFormat.String, pauseUserData);
+			mpv.ObserveProperty("eof-reached", MpvFormat.String, eofReachedUserData);
+			mpv.ObserveProperty("paused-for-cache", MpvFormat.String, pausedForCacheUserData);
+		}
+
+		public void SetMpvHost(IntPtr hwnd)
 		{
 			var playerHostPtrLong = hwnd.ToInt64();
 			mpv.SetPropertyLong("wid", playerHostPtrLong);
@@ -591,6 +636,27 @@ namespace Mpv.NET.Player
 
 				var loadMethodString = LoadMethodHelper.ToString(loadMethod);
 				mpv.Command("loadfile", path, loadMethodString);
+			}
+		}
+
+		public void LoadAsync(string path, bool force = false)
+        {
+			Guard.AgainstNullOrEmptyOrWhiteSpaceString(path, nameof(path));
+
+			lock (mpvLock)
+			{
+				mpv.SetPropertyString("pause", AutoPlay ? "no" : "yes");
+
+				var loadMethod = LoadMethod.Replace;
+
+				// If there is media already playing, we append
+				// the desired video onto the playlist.
+				// (Unless force is true.)
+				if (IsPlaying && !force)
+					loadMethod = LoadMethod.Append;
+
+				var loadMethodString = LoadMethodHelper.ToString(loadMethod);
+				mpv.CommandAsync(0, "loadfile", path, loadMethodString);
 			}
 		}
 

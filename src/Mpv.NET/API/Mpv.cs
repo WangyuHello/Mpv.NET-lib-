@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Mpv.NET.API
 {
@@ -44,9 +45,22 @@ namespace Mpv.NET.API
 			}
 		}
 
+		public IntPtr RenderHandle
+		{
+			get => renderHandle;
+			private set
+			{
+				if (value == IntPtr.Zero)
+					throw new ArgumentException("Invalid handle pointer.", nameof(renderHandle));
+
+				renderHandle = value;
+			}
+		}
+
 		private IMpvFunctions functions;
 		private IMpvEventLoop eventLoop;
 		private IntPtr handle;
+		private IntPtr renderHandle;
 
 		private bool disposed = false;
 
@@ -78,6 +92,22 @@ namespace Mpv.NET.API
 			EventLoop = eventLoop;
 
 			InitialiseMpv();
+
+			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
+			eventLoop.Start();
+		}
+
+		public Mpv(string dllPath, bool render)
+        {
+			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
+
+			Functions = new MpvFunctions(dllPath);
+
+			InitialiseMpv();
+			InitialiseMpvRender();
+
+			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
+			eventLoop.Start();
 		}
 
 		internal Mpv(IntPtr handle, IMpvFunctions functions)
@@ -99,6 +129,124 @@ namespace Mpv.NET.API
 			var error = Functions.Initialise(Handle);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
+		}
+
+		private unsafe void InitialiseMpvRender()
+		{
+			var renderHandle = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)));
+			var advCont = new int[1] { 1 };
+			MpvError r;
+			fixed(int* advContPtr = advCont)
+            {
+				var initParams = new MpvRenderParam[]
+				{
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_API_TYPE,
+						Data = MpvMarshal.GetComPtrFromManagedUTF8String(MPV_RENDER_PARAM_API_TYPE_DEFINES.MPV_RENDER_API_TYPE_SW)
+					},
+					new()
+                    {
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_ADVANCED_CONTROL,
+						Data = (IntPtr)advContPtr
+                    },
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID,
+					}
+				};
+
+				fixed (MpvRenderParam* initParamsPtr = initParams)
+				{
+					r = Functions.RenderContextCreate(ref renderHandle, Handle, initParamsPtr);
+				}
+			}
+			if (r != MpvError.Success)
+			{
+				throw new MpvAPIException("Initialize render failed");
+			}
+			RenderHandle = renderHandle;
+		}
+
+		public void RenderContextSetUpdateCallback(MpvRenderUpdateFn callback, IntPtr callbackCtx)
+        {
+			Functions.RenderContextSetUpdateCallback(RenderHandle, callback, callbackCtx);
+        }
+
+		public void RenderReportSwap()
+        {
+			Functions.RenderContextReportSwap(RenderHandle);
+        }
+
+		public MpvRenderUpdateFlag RenderContextUpdate()
+        {
+			var flag = Functions.RenderContextUpdate(RenderHandle);
+			return flag;
+        }
+
+		public void SetWakeupCallback(MpvWakeupCallback callback, IntPtr ctx)
+        {
+			Functions.SetWakeupCallback(RenderHandle, callback, ctx);
+        }
+
+        public IntPtr RenderSurface { get; set; }
+
+        public unsafe void RenderContextRender(int width, int height, IntPtr renderSurface)
+		{
+			if (renderSurface == IntPtr.Zero) return;
+			var sizeParam = new int[2] { width, height };
+			uint[] strideParam = new uint[] { (uint)(width * 4) };
+			MpvError error;
+			fixed (int* sizeParamPtr = sizeParam)
+			{
+				fixed (uint* strideParamPtr = strideParam)
+				{
+					var renderParams = new MpvRenderParam[]
+					{
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_SW_SIZE,
+							Data = (IntPtr)sizeParamPtr
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_SW_FORMAT,
+							Data = MpvMarshal.GetComPtrFromManagedUTF8String("bgr0")
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_SW_STRIDE,
+							Data = (IntPtr)strideParamPtr
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_SW_POINTER,
+							Data = renderSurface
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID,
+						}
+					};
+
+					fixed (MpvRenderParam* paramPtr = renderParams)
+					{
+						error = Functions.RenderContextRender(RenderHandle, paramPtr);
+					}
+				}
+			}
+			if (error != MpvError.Success)
+				throw MpvAPIException.FromError(error, Functions);
+		}
+
+		public unsafe void RenderContextRender(int width, int height)
+        {
+			RenderContextRender(width, height, RenderSurface);
+		}
+
+        public unsafe void RenderContextRender(int width, int height, byte* renderSurface)
+        {
+			RenderContextRender(width, height, (IntPtr)renderSurface);
 		}
 
 		public long ClientAPIVersion()
@@ -436,6 +584,11 @@ namespace Mpv.NET.API
 				// The event loop calls into mpv so we can't TerminateDestrot yet!
 				if (disposing && EventLoop is IDisposable disposableEventLoop)
 					disposableEventLoop.Dispose();
+
+				if (RenderHandle != IntPtr.Zero)
+				{
+					Functions.RenderContextFree(RenderHandle);
+				}
 
 				Functions.TerminateDestroy(Handle);
 

@@ -28,7 +28,7 @@ namespace Mpv.NET.API
 	public delegate MpvError MpvInitialise(IntPtr mpvHandle);
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void MpvDetachDestroy(IntPtr mpvHandle);
+	public delegate void MpvDestroy(IntPtr mpvHandle);
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void MpvTerminateDestroy(IntPtr mpvHandle);
@@ -193,4 +193,54 @@ namespace Mpv.NET.API
 	// Other
 
 	public delegate void MpvWakeupCallback(IntPtr d);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate MpvError MpvRenderContextCreate(
+		ref IntPtr res,
+		IntPtr mpvHandle,
+		MpvRenderParam* @params
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate MpvError MpvRenderContextSetParameter(
+		IntPtr ctx,
+		MpvRenderParam param
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate MpvError MpvRenderContextGetInfo(
+		IntPtr ctx,
+		MpvRenderParam param
+		);
+
+	public delegate void MpvRenderUpdateFn(IntPtr cbCtx);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void MpvRenderContextSetUpdateCallback(
+		IntPtr ctx,
+		[MarshalAs(UnmanagedType.FunctionPtr)]
+		MpvRenderUpdateFn callback,
+		IntPtr callbackCtx
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate MpvRenderUpdateFlag MpvRenderContextUpdate(
+		IntPtr ctx
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public unsafe delegate MpvError MpvRenderContextRender(
+		IntPtr ctx,
+		MpvRenderParam* param
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void MpvRenderContextReportSwap(
+		IntPtr ctx
+		);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void MpvRenderContextFree(
+		IntPtr ctx
+		);
 }
