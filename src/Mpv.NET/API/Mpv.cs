@@ -1,4 +1,5 @@
 ﻿using Mpv.NET.API.Interop;
+using Mpv.NET.API.Structs;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -110,6 +111,19 @@ namespace Mpv.NET.API
 			eventLoop.Start();
 		}
 
+		public Mpv(string dllPath, GetProcAddressFn getProcAddress)
+		{
+			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
+
+			Functions = new MpvFunctions(dllPath);
+
+			InitialiseMpv();
+			InitialiseMpvRenderGL(getProcAddress);
+
+			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
+			eventLoop.Start();
+		}
+
 		internal Mpv(IntPtr handle, IMpvFunctions functions)
 		{
 			Handle = handle;
@@ -168,6 +182,54 @@ namespace Mpv.NET.API
 			RenderHandle = renderHandle;
 		}
 
+		private unsafe void InitialiseMpvRenderGL(GetProcAddressFn getProcAddr)
+        {
+			var renderHandle = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)));
+			var advCont = new int[1] { 1 };
+			var glInitParams = new MpvOpenglInitParams
+			{
+				GetProcAddress = getProcAddr
+			};
+			MpvError r;
+			var glInitPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MpvOpenglInitParams)));
+			Marshal.StructureToPtr(glInitParams, glInitPtr, true);
+
+			fixed (int* advContPtr = advCont)
+			{
+				var initParams = new MpvRenderParam[]
+				{
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_API_TYPE,
+						Data = MpvMarshal.GetComPtrFromManagedUTF8String(MPV_RENDER_PARAM_API_TYPE_DEFINES.MPV_RENDER_API_TYPE_OPENGL)
+					},
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS,
+						Data = glInitPtr
+					},
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_ADVANCED_CONTROL,
+						Data = (IntPtr)advContPtr
+					},
+					new()
+					{
+						Type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID,
+					}
+				};
+
+				fixed (MpvRenderParam* initParamsPtr = initParams)
+				{
+					r = Functions.RenderContextCreate(ref renderHandle, Handle, initParamsPtr);
+				}
+			}
+			if (r != MpvError.Success)
+			{
+				throw new MpvAPIException("Initialize render failed");
+			}
+			RenderHandle = renderHandle;
+		}
 		public void RenderContextSetUpdateCallback(MpvRenderUpdateFn callback, IntPtr callbackCtx)
         {
 			Functions.RenderContextSetUpdateCallback(RenderHandle, callback, callbackCtx);
@@ -239,6 +301,46 @@ namespace Mpv.NET.API
 				throw MpvAPIException.FromError(error, Functions);
 		}
 
+		public unsafe void RenderContextRenderGL(int width, int height)
+        {
+			MpvOpenglFbo fbo = new MpvOpenglFbo
+			{
+				W = width,
+				H = height,
+				Fbo = 0
+			};
+			var fboPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MpvOpenglFbo)));
+			Marshal.StructureToPtr(fbo, fboPtr, true);
+			MpvError error;
+			var flipY = new int[] { 1 };
+			fixed(int* yPtr = flipY)
+            {
+				var renderParams = new MpvRenderParam[]
+					{
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_OPENGL_FBO,
+							Data = fboPtr
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_FLIP_Y,
+							Data = (IntPtr)yPtr
+						},
+						new()
+						{
+							Type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID,
+						}
+					};
+
+				fixed (MpvRenderParam* paramPtr = renderParams)
+				{
+					error = Functions.RenderContextRender(RenderHandle, paramPtr);
+				}
+			}
+			if (error != MpvError.Success)
+				throw MpvAPIException.FromError(error, Functions);
+		}
 		public unsafe void RenderContextRender(int width, int height)
         {
 			RenderContextRender(width, height, RenderSurface);

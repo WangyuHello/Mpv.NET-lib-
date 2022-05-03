@@ -1,4 +1,5 @@
 ﻿using Mpv.NET.API;
+using Mpv.NET.API.Structs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -525,6 +526,12 @@ namespace Mpv.NET.Player
 			InitialiseRender();
 		}
 
+		public MpvPlayer(string libMpvPath, GetProcAddressFn getProcAddress)
+		{
+			LibMpvPath = libMpvPath;
+			InitialiseRender(getProcAddress);
+		}
+
 		private void Initialise()
 		{
 			// Initialise the API.
@@ -567,6 +574,25 @@ namespace Mpv.NET.Player
 			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
 		}
 
+		private void InitialiseRender(GetProcAddressFn getProcAddress)
+		{
+			// Initialise the API.
+			if (!string.IsNullOrEmpty(LibMpvPath))
+				InitialiseMpvRender(LibMpvPath, getProcAddress);
+			else
+			{
+				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
+				if (foundPath != null)
+					InitialiseMpvRender(foundPath, getProcAddress);
+				else
+					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
+			}
+
+			// Set defaults.
+			Volume = 50;
+			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
+		}
+
 		private void InitialiseMpv(string libMpvPath)
 		{
 			mpv = new API.Mpv(libMpvPath);
@@ -589,6 +615,25 @@ namespace Mpv.NET.Player
 		private void InitialiseMpvRender(string libMpvPath)
         {
 			mpv = new API.Mpv(libMpvPath, true);
+
+			mpv.LogMessage += MpvOnLogMessage;
+
+			mpv.PlaybackRestart += MpvOnPlaybackRestart;
+			mpv.Seek += MpvOnSeek;
+
+			mpv.FileLoaded += MpvOnFileLoaded;
+			mpv.EndFile += MpvOnEndFile;
+
+			mpv.PropertyChange += MpvOnPropertyChange;
+
+			mpv.ObserveProperty("pause", MpvFormat.String, pauseUserData);
+			mpv.ObserveProperty("eof-reached", MpvFormat.String, eofReachedUserData);
+			mpv.ObserveProperty("paused-for-cache", MpvFormat.String, pausedForCacheUserData);
+		}
+
+		private void InitialiseMpvRender(string libMpvPath, GetProcAddressFn getProcAddress)
+		{
+			mpv = new API.Mpv(libMpvPath, getProcAddress);
 
 			mpv.LogMessage += MpvOnLogMessage;
 

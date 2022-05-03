@@ -15,16 +15,16 @@ namespace Mpv.NET.API.Structs
          * glGenFramebuffers() that is complete and color-renderable, or 0. If the
          * value is 0, this refers to the OpenGL default framebuffer.
          */
-        int Fbo;
+        public int Fbo;
         /**
          * Valid dimensions. This must refer to the size of the framebuffer. This
          * must always be set.
          */
-        int W, H;
+        public int W, H;
         /**
          * Underlying texture internal format (e.g. GL_RGBA8), or 0 if unknown. If
          * this is the default framebuffer, this can be an equivalent.
          */
-        int InternalFormat;
+        public int InternalFormat;
     }
 }

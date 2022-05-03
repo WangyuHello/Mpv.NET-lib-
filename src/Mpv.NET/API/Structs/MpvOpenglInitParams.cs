@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mpv.NET.API.Interop;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,11 +12,11 @@ namespace Mpv.NET.API.Structs
     public struct MpvOpenglInitParams
     {
         [MarshalAs(UnmanagedType.FunctionPtr)]
-        GetProcAddressFn GetProcAddress;
+        public GetProcAddressFn GetProcAddress;
 
-        IntPtr GetProcAddressCtx;
+        public IntPtr GetProcAddressCtx;
     }
 
-    public delegate void GetProcAddressFn(IntPtr ctx, string name);
+    public delegate IntPtr GetProcAddressFn(IntPtr ctx, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler))] string name);
 
 }
