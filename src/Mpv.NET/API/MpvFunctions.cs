@@ -52,7 +52,9 @@ namespace Mpv.NET.API
 		public MpvRenderContextReportSwap RenderContextReportSwap               { get; private set; }
 		public MpvRenderContextFree RenderContextFree                           { get; private set; }
 
-		private IntPtr dllHandle;
+		public MpvSetGpuNextD3DInitCallback SetGpuNextD3DInitCallback           { get; private set; }
+
+        private IntPtr dllHandle;
 
 		private bool disposed = false;
 
@@ -118,7 +120,8 @@ namespace Mpv.NET.API
 			RenderContextRender = LoadFunction<MpvRenderContextRender>("mpv_render_context_render");
 			RenderContextReportSwap = LoadFunction<MpvRenderContextReportSwap>("mpv_render_context_report_swap");
 			RenderContextFree = LoadFunction<MpvRenderContextFree>("mpv_render_context_free");
-		}
+			SetGpuNextD3DInitCallback = LoadFunction<MpvSetGpuNextD3DInitCallback>("mpv_set_gpu_next_d3d_init_callback");
+        }
 
 		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class
 		{

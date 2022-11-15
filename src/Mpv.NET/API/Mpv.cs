@@ -351,7 +351,12 @@ namespace Mpv.NET.API
 			RenderContextRender(width, height, (IntPtr)renderSurface);
 		}
 
-		public long ClientAPIVersion()
+		public void SetGpuNextD3dInitCallback(MpvGpuNextD3dInitFn callback)
+		{
+			Functions.SetGpuNextD3DInitCallback(callback);
+		}
+
+        public long ClientAPIVersion()
 		{
 			Guard.AgainstDisposed(disposed, nameof(Mpv));
 

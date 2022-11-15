@@ -48,6 +48,6 @@ namespace Mpv.NET.API
 		MpvRenderContextRender RenderContextRender { get; }
 		MpvRenderContextReportSwap RenderContextReportSwap { get; }
 		MpvRenderContextFree RenderContextFree { get; }
-
+		MpvSetGpuNextD3DInitCallback SetGpuNextD3DInitCallback { get; }
 	}
 }
