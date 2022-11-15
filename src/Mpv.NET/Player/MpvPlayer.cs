@@ -656,14 +656,19 @@ namespace Mpv.NET.Player
 			mpv.SetPropertyLong("wid", playerHostPtrLong);
 		}
 
-		/// <summary>
-		/// Loads the file at the path into mpv. If called while media is playing, the specified media
-		/// will be appended to the playlist.
-		/// If youtube-dl is enabled, this method can be used to load videos from video sites.
-		/// </summary>
-		/// <param name="path">Path or URL to media source.</param>
-		/// <param name="force">If true, will force load the media replacing any currently playing media.</param>
-		public void Load(string path, bool force = false)
+		public void SetGpuNextD3DInitCallback(MpvGpuNextD3dInitFn callback)
+		{
+			mpv.SetGpuNextD3dInitCallback(callback);
+		}
+
+        /// <summary>
+        /// Loads the file at the path into mpv. If called while media is playing, the specified media
+        /// will be appended to the playlist.
+        /// If youtube-dl is enabled, this method can be used to load videos from video sites.
+        /// </summary>
+        /// <param name="path">Path or URL to media source.</param>
+        /// <param name="force">If true, will force load the media replacing any currently playing media.</param>
+        public void Load(string path, bool force = false)
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(path, nameof(path));
 
