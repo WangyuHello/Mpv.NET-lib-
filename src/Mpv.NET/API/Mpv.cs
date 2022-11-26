@@ -58,20 +58,33 @@ namespace Mpv.NET.API
 			}
 		}
 
-		private IMpvFunctions functions;
+        public IntPtr RaCtx
+        {
+            get => raCtx;
+            private set
+            {
+                if (value == IntPtr.Zero)
+                    throw new ArgumentException("Invalid handle pointer.", nameof(raCtx));
+
+                raCtx = value;
+            }
+        }
+
+        private IMpvFunctions functions;
 		private IMpvEventLoop eventLoop;
 		private IntPtr handle;
 		private IntPtr renderHandle;
+		private IntPtr raCtx;
 
 		private bool disposed = false;
 
-		public Mpv(string dllPath)
+		public Mpv(string dllPath, int width = 0, int height = 0)
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
 
 			Functions = new MpvFunctions(dllPath);
 
-			InitialiseMpv();
+			InitialiseMpv(width, height);
 
 			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
 			eventLoop.Start();
@@ -134,7 +147,7 @@ namespace Mpv.NET.API
 			eventLoop.Start();
 		}
 
-		private void InitialiseMpv()
+		private void InitialiseMpv(int width = 0, int height = 0)
 		{
 			Handle = Functions.Create();
 			if (Handle == IntPtr.Zero)
@@ -143,6 +156,13 @@ namespace Mpv.NET.API
 			var error = Functions.Initialise(Handle);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
+
+			Functions.SetRaCtxCallback((ptr, wp, hp) =>
+			{
+				RaCtx = ptr;
+				Marshal.WriteInt32(wp, width); 
+				Marshal.WriteInt32(hp, height);
+			});
 		}
 
 		private unsafe void InitialiseMpvRender()
@@ -351,15 +371,18 @@ namespace Mpv.NET.API
 			RenderContextRender(width, height, (IntPtr)renderSurface);
 		}
 
-		public void SetD3DInitCallback(MpvGpuNextD3dInitFn callback)
+		public void SetD3DInitCallback(MpvD3dInitFn callback)
 		{
 			Functions.SetD3DInitCallback(callback);
 		}
 
-		public void SetPanelSize(int width, int height, float scaleX, float scaleY)
+        public void SetPanelSize(int width, int height, float scaleX, float scaleY)
 		{
-			Functions.SetPanelSize(width, height, scaleX, scaleY);
-		}
+			if (RaCtx != IntPtr.Zero)
+			{
+                Functions.SetPanelSize(RaCtx, width, height, scaleX, scaleY);
+            }
+        }
 
         public long ClientAPIVersion()
 		{

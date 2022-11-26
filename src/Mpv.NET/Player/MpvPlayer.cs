@@ -492,7 +492,7 @@ namespace Mpv.NET.Player
 		/// Creates an instance of MpvPlayer. This will let mpv create it's own window.
 		/// </summary>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(string libMpvPath) : this(IntPtr.Zero, libMpvPath)
+		public MpvPlayer(string libMpvPath, int width = 0, int height = 0) : this(IntPtr.Zero, libMpvPath, width, height)
 		{
 		}
 
@@ -512,12 +512,12 @@ namespace Mpv.NET.Player
 		/// </summary>
 		/// <param name="hwnd">The windows handle that will host Mpv, such as one created with a WindowsFormsHost in WPF.</param>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(IntPtr hwnd, string libMpvPath)
+		public MpvPlayer(IntPtr hwnd, string libMpvPath, int width = 0, int height = 0)
 		{
 			this.LibMpvPath = libMpvPath;
 			this.hwnd = hwnd;
 
-			Initialise();
+			Initialise(width, height);
 		}
 
 		public MpvPlayer(string libMpvPath, bool render)
@@ -532,16 +532,16 @@ namespace Mpv.NET.Player
 			InitialiseRender(getProcAddress);
 		}
 
-		private void Initialise()
+		private void Initialise(int width = 0, int height = 0)
 		{
 			// Initialise the API.
 			if (!string.IsNullOrEmpty(LibMpvPath))
-				InitialiseMpv(LibMpvPath);
+				InitialiseMpv(LibMpvPath, width, height);
 			else
 			{
 				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
 				if (foundPath != null)
-					InitialiseMpv(foundPath);
+					InitialiseMpv(foundPath, width, height);
 				else
 					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
 			}
@@ -593,9 +593,9 @@ namespace Mpv.NET.Player
 			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
 		}
 
-		private void InitialiseMpv(string libMpvPath)
+		private void InitialiseMpv(string libMpvPath, int width = 0, int height = 0)
 		{
-			mpv = new API.Mpv(libMpvPath);
+			mpv = new API.Mpv(libMpvPath, width, height);
 
 			mpv.LogMessage += MpvOnLogMessage;
 
@@ -656,7 +656,7 @@ namespace Mpv.NET.Player
 			mpv.SetPropertyLong("wid", playerHostPtrLong);
 		}
 
-		public void SetD3DInitCallback(MpvGpuNextD3dInitFn callback)
+		public void SetD3DInitCallback(MpvD3dInitFn callback)
 		{
 			mpv.SetD3DInitCallback(callback);
 		}

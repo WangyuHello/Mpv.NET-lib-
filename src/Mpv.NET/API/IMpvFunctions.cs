@@ -49,6 +49,7 @@ namespace Mpv.NET.API
 		MpvRenderContextReportSwap RenderContextReportSwap { get; }
 		MpvRenderContextFree RenderContextFree { get; }
 		MpvSetD3DInitCallback SetD3DInitCallback { get; }
+		MpvSetRaCtxCallback SetRaCtxCallback { get; }
 		MpvSetPanelSize SetPanelSize { get; }
 	}
 }

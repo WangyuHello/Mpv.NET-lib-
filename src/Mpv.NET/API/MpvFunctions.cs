@@ -52,6 +52,7 @@ namespace Mpv.NET.API
 		public MpvRenderContextReportSwap RenderContextReportSwap               { get; private set; }
 		public MpvRenderContextFree RenderContextFree                           { get; private set; }
 		public MpvSetD3DInitCallback SetD3DInitCallback           { get; private set; }
+		public MpvSetRaCtxCallback SetRaCtxCallback { get; private set; }
 		public MpvSetPanelSize SetPanelSize { get; private set; }
 
         private IntPtr dllHandle;
@@ -121,6 +122,7 @@ namespace Mpv.NET.API
 			RenderContextReportSwap = LoadFunction<MpvRenderContextReportSwap>("mpv_render_context_report_swap");
 			RenderContextFree = LoadFunction<MpvRenderContextFree>("mpv_render_context_free");
 			SetD3DInitCallback = LoadFunction<MpvSetD3DInitCallback>("mpv_set_d3d_init_callback");
+            SetRaCtxCallback = LoadFunction<MpvSetRaCtxCallback>("mpv_set_ra_ctx_callback");
 			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
         }
 
