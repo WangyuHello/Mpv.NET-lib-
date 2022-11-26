@@ -247,8 +247,10 @@ namespace Mpv.NET.API
     public delegate void MpvGpuNextD3dInitFn(IntPtr d3d11Device, IntPtr swapChain);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int MpvSetGpuNextD3DInitCallback(
+    public delegate int MpvSetD3DInitCallback(
         MpvGpuNextD3dInitFn callback
         );
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetPanelSize(int width, int height, float scaleX, float scaleY);
 }

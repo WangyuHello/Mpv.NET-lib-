@@ -51,8 +51,8 @@ namespace Mpv.NET.API
 		public MpvRenderContextRender RenderContextRender                       { get; private set; }
 		public MpvRenderContextReportSwap RenderContextReportSwap               { get; private set; }
 		public MpvRenderContextFree RenderContextFree                           { get; private set; }
-
-		public MpvSetGpuNextD3DInitCallback SetGpuNextD3DInitCallback           { get; private set; }
+		public MpvSetD3DInitCallback SetD3DInitCallback           { get; private set; }
+		public MpvSetPanelSize SetPanelSize { get; private set; }
 
         private IntPtr dllHandle;
 
@@ -120,7 +120,8 @@ namespace Mpv.NET.API
 			RenderContextRender = LoadFunction<MpvRenderContextRender>("mpv_render_context_render");
 			RenderContextReportSwap = LoadFunction<MpvRenderContextReportSwap>("mpv_render_context_report_swap");
 			RenderContextFree = LoadFunction<MpvRenderContextFree>("mpv_render_context_free");
-			SetGpuNextD3DInitCallback = LoadFunction<MpvSetGpuNextD3DInitCallback>("mpv_set_gpu_next_d3d_init_callback");
+			SetD3DInitCallback = LoadFunction<MpvSetD3DInitCallback>("mpv_set_d3d_init_callback");
+			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
         }
 
 		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class

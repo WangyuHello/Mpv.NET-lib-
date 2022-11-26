@@ -351,9 +351,14 @@ namespace Mpv.NET.API
 			RenderContextRender(width, height, (IntPtr)renderSurface);
 		}
 
-		public void SetGpuNextD3dInitCallback(MpvGpuNextD3dInitFn callback)
+		public void SetD3DInitCallback(MpvGpuNextD3dInitFn callback)
 		{
-			Functions.SetGpuNextD3DInitCallback(callback);
+			Functions.SetD3DInitCallback(callback);
+		}
+
+		public void SetPanelSize(int width, int height, float scaleX, float scaleY)
+		{
+			Functions.SetPanelSize(width, height, scaleX, scaleY);
 		}
 
         public long ClientAPIVersion()

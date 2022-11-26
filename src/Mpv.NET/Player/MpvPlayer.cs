@@ -656,9 +656,14 @@ namespace Mpv.NET.Player
 			mpv.SetPropertyLong("wid", playerHostPtrLong);
 		}
 
-		public void SetGpuNextD3DInitCallback(MpvGpuNextD3dInitFn callback)
+		public void SetD3DInitCallback(MpvGpuNextD3dInitFn callback)
 		{
-			mpv.SetGpuNextD3dInitCallback(callback);
+			mpv.SetD3DInitCallback(callback);
+		}
+
+		public void SetPanelSize(int width, int height, float scaleX, float scaleY)
+		{
+			mpv.SetPanelSize(width, height, scaleX, scaleY);
 		}
 
         /// <summary>
