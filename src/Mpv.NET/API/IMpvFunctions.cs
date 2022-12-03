@@ -51,5 +51,6 @@ namespace Mpv.NET.API
 		MpvSetD3DInitCallback SetD3DInitCallback { get; }
 		MpvSetRaCtxCallback SetRaCtxCallback { get; }
 		MpvSetPanelSize SetPanelSize { get; }
+		MpvSetPanelScale SetPanelScale { get; }
 	}
 }

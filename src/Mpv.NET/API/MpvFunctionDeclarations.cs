@@ -245,7 +245,7 @@ namespace Mpv.NET.API
 		);
 
     public delegate void MpvD3dInitFn(IntPtr d3d11Device, IntPtr swapChain);
-    public delegate void MpvRaCtxFn(IntPtr raCtx, IntPtr width, IntPtr height);
+    public delegate void MpvRaCtxFn(IntPtr raCtx, IntPtr width, IntPtr height, IntPtr scalex, IntPtr scaley);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MpvSetD3DInitCallback(MpvD3dInitFn callback);
@@ -254,5 +254,8 @@ namespace Mpv.NET.API
     public delegate int MpvSetRaCtxCallback(MpvRaCtxFn callback);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int MpvSetPanelSize(IntPtr raCtx, int width, int height, float scaleX, float scaleY);
+    public delegate int MpvSetPanelSize(IntPtr raCtx, int width, int height);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetPanelScale(IntPtr raCtx, float scaleX, float scaleY);
 }

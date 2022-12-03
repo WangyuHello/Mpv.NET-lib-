@@ -492,7 +492,7 @@ namespace Mpv.NET.Player
 		/// Creates an instance of MpvPlayer. This will let mpv create it's own window.
 		/// </summary>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(string libMpvPath, int width = 0, int height = 0) : this(IntPtr.Zero, libMpvPath, width, height)
+		public MpvPlayer(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0) : this(IntPtr.Zero, libMpvPath, width, height, scaleX, scaleY)
 		{
 		}
 
@@ -512,12 +512,12 @@ namespace Mpv.NET.Player
 		/// </summary>
 		/// <param name="hwnd">The windows handle that will host Mpv, such as one created with a WindowsFormsHost in WPF.</param>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(IntPtr hwnd, string libMpvPath, int width = 0, int height = 0)
+		public MpvPlayer(IntPtr hwnd, string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
 		{
 			this.LibMpvPath = libMpvPath;
 			this.hwnd = hwnd;
 
-			Initialise(width, height);
+			Initialise(width, height, scaleX, scaleY);
 		}
 
 		public MpvPlayer(string libMpvPath, bool render)
@@ -532,16 +532,16 @@ namespace Mpv.NET.Player
 			InitialiseRender(getProcAddress);
 		}
 
-		private void Initialise(int width = 0, int height = 0)
+		private void Initialise(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
 		{
 			// Initialise the API.
 			if (!string.IsNullOrEmpty(LibMpvPath))
-				InitialiseMpv(LibMpvPath, width, height);
+				InitialiseMpv(LibMpvPath, width, height, scaleX, scaleY);
 			else
 			{
 				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
 				if (foundPath != null)
-					InitialiseMpv(foundPath, width, height);
+					InitialiseMpv(foundPath, width, height, scaleX, scaleY);
 				else
 					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
 			}
@@ -593,9 +593,9 @@ namespace Mpv.NET.Player
 			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
 		}
 
-		private void InitialiseMpv(string libMpvPath, int width = 0, int height = 0)
+		private void InitialiseMpv(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
 		{
-			mpv = new API.Mpv(libMpvPath, width, height);
+			mpv = new API.Mpv(libMpvPath, width, height, scaleX, scaleY);
 
 			mpv.LogMessage += MpvOnLogMessage;
 
@@ -661,10 +661,15 @@ namespace Mpv.NET.Player
 			mpv.SetD3DInitCallback(callback);
 		}
 
-		public void SetPanelSize(int width, int height, float scaleX, float scaleY)
+		public void SetPanelSize(int width, int height)
 		{
-			mpv.SetPanelSize(width, height, scaleX, scaleY);
+			mpv.SetPanelSize(width, height);
 		}
+
+        public void SetPanelScale(float scaleX, float scaleY)
+        {
+            mpv.SetPanelScale(scaleX, scaleY);
+        }
 
         /// <summary>
         /// Loads the file at the path into mpv. If called while media is playing, the specified media

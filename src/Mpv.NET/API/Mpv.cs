@@ -78,13 +78,13 @@ namespace Mpv.NET.API
 
 		private bool disposed = false;
 
-		public Mpv(string dllPath, int width = 0, int height = 0)
+		public Mpv(string dllPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
 
 			Functions = new MpvFunctions(dllPath);
 
-			InitialiseMpv(width, height);
+			InitialiseMpv(width, height, scaleX, scaleY);
 
 			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
 			eventLoop.Start();
@@ -147,7 +147,7 @@ namespace Mpv.NET.API
 			eventLoop.Start();
 		}
 
-		private void InitialiseMpv(int width = 0, int height = 0)
+		private void InitialiseMpv(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
 		{
 			Handle = Functions.Create();
 			if (Handle == IntPtr.Zero)
@@ -157,12 +157,18 @@ namespace Mpv.NET.API
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 
-			Functions.SetRaCtxCallback((ptr, wp, hp) =>
+			Functions.SetRaCtxCallback((ptr, wp, hp, xp, yp) =>
 			{
 				RaCtx = ptr;
 				Marshal.WriteInt32(wp, width); 
 				Marshal.WriteInt32(hp, height);
-			});
+                var xbits = BitConverter.GetBytes(scaleX);
+				var xint = BitConverter.ToInt32(xbits);
+                var ybits = BitConverter.GetBytes(scaleY);
+                var yint = BitConverter.ToInt32(ybits);
+                Marshal.WriteInt32(xp, xint);
+				Marshal.WriteInt32(yp, yint);
+            });
 		}
 
 		private unsafe void InitialiseMpvRender()
@@ -376,11 +382,19 @@ namespace Mpv.NET.API
 			Functions.SetD3DInitCallback(callback);
 		}
 
-        public void SetPanelSize(int width, int height, float scaleX, float scaleY)
+        public void SetPanelSize(int width, int height)
 		{
 			if (RaCtx != IntPtr.Zero)
 			{
-                Functions.SetPanelSize(RaCtx, width, height, scaleX, scaleY);
+                Functions.SetPanelSize(RaCtx, width, height);
+            }
+        }
+
+        public void SetPanelScale(float scaleX, float scaleY)
+        {
+            if (RaCtx != IntPtr.Zero)
+            {
+                Functions.SetPanelScale(RaCtx, scaleX, scaleY);
             }
         }
 
