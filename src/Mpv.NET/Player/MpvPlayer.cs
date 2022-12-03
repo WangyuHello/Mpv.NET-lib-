@@ -3,6 +3,7 @@ using Mpv.NET.API.Structs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -492,7 +493,7 @@ namespace Mpv.NET.Player
 		/// Creates an instance of MpvPlayer. This will let mpv create it's own window.
 		/// </summary>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0) : this(IntPtr.Zero, libMpvPath, width, height, scaleX, scaleY)
+		public MpvPlayer(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default) : this(IntPtr.Zero, libMpvPath, width, height, scaleX, scaleY, bounds)
 		{
 		}
 
@@ -512,12 +513,12 @@ namespace Mpv.NET.Player
 		/// </summary>
 		/// <param name="hwnd">The windows handle that will host Mpv, such as one created with a WindowsFormsHost in WPF.</param>
 		/// <param name="libMpvPath">Relative or absolute path to the libmpv DLL.</param>
-		public MpvPlayer(IntPtr hwnd, string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
+		public MpvPlayer(IntPtr hwnd, string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
 			this.LibMpvPath = libMpvPath;
 			this.hwnd = hwnd;
 
-			Initialise(width, height, scaleX, scaleY);
+			Initialise(width, height, scaleX, scaleY, bounds);
 		}
 
 		public MpvPlayer(string libMpvPath, bool render)
@@ -532,16 +533,16 @@ namespace Mpv.NET.Player
 			InitialiseRender(getProcAddress);
 		}
 
-		private void Initialise(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
+		private void Initialise(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
 			// Initialise the API.
 			if (!string.IsNullOrEmpty(LibMpvPath))
-				InitialiseMpv(LibMpvPath, width, height, scaleX, scaleY);
+				InitialiseMpv(LibMpvPath, width, height, scaleX, scaleY, bounds);
 			else
 			{
 				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
 				if (foundPath != null)
-					InitialiseMpv(foundPath, width, height, scaleX, scaleY);
+					InitialiseMpv(foundPath, width, height, scaleX, scaleY, bounds);
 				else
 					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
 			}
@@ -593,9 +594,9 @@ namespace Mpv.NET.Player
 			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
 		}
 
-		private void InitialiseMpv(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
+		private void InitialiseMpv(string libMpvPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
-			mpv = new API.Mpv(libMpvPath, width, height, scaleX, scaleY);
+			mpv = new API.Mpv(libMpvPath, width, height, scaleX, scaleY, bounds);
 
 			mpv.LogMessage += MpvOnLogMessage;
 

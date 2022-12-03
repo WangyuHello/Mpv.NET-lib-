@@ -1,6 +1,7 @@
 ﻿using Mpv.NET.API.Interop;
 using Mpv.NET.API.Structs;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -78,13 +79,13 @@ namespace Mpv.NET.API
 
 		private bool disposed = false;
 
-		public Mpv(string dllPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
+		public Mpv(string dllPath, int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
 
 			Functions = new MpvFunctions(dllPath);
 
-			InitialiseMpv(width, height, scaleX, scaleY);
+			InitialiseMpv(width, height, scaleX, scaleY, bounds);
 
 			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
 			eventLoop.Start();
@@ -147,7 +148,7 @@ namespace Mpv.NET.API
 			eventLoop.Start();
 		}
 
-		private void InitialiseMpv(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0)
+		private void InitialiseMpv(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
 			Handle = Functions.Create();
 			if (Handle == IntPtr.Zero)
@@ -157,7 +158,7 @@ namespace Mpv.NET.API
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 
-			Functions.SetRaCtxCallback((ptr, wp, hp, xp, yp) =>
+			Functions.SetRaCtxCallback((ptr, wp, hp, xp, yp, blp, btp, brp, bbp) =>
 			{
 				RaCtx = ptr;
 				Marshal.WriteInt32(wp, width); 
@@ -168,6 +169,11 @@ namespace Mpv.NET.API
                 var yint = BitConverter.ToInt32(ybits);
                 Marshal.WriteInt32(xp, xint);
 				Marshal.WriteInt32(yp, yint);
+
+                Marshal.WriteInt32(blp, bounds.X);
+                Marshal.WriteInt32(btp, bounds.Width);
+                Marshal.WriteInt32(brp, bounds.Y);
+                Marshal.WriteInt32(bbp, bounds.Height);
             });
 		}
 
