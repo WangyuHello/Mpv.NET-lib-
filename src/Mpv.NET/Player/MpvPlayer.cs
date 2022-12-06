@@ -867,11 +867,28 @@ namespace Mpv.NET.Player
 			}
 		}
 
-		/// <summary>
-		/// Go to the previous entry in the playlist.
-		/// </summary>
-		/// <returns>True if successful, false if not. False indicates that there are no entries before the current entry.</returns>
-		public bool PlaylistPrevious()
+        public bool PlaylistPlayIndex(int index)
+        {
+            try
+            {
+                lock (mpvLock)
+                {
+                    mpv.Command("playlist-play-index", $"{index}");
+                }
+
+                return true;
+            }
+            catch (MpvAPIException exception)
+            {
+                return HandleCommandMpvAPIException(exception);
+            }
+        }
+
+        /// <summary>
+        /// Go to the previous entry in the playlist.
+        /// </summary>
+        /// <returns>True if successful, false if not. False indicates that there are no entries before the current entry.</returns>
+        public bool PlaylistPrevious()
 		{
 			try
 			{
