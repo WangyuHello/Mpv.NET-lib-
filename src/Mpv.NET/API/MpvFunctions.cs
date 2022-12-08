@@ -125,6 +125,7 @@ namespace Mpv.NET.API
 			SetD3DInitCallback = LoadFunction<MpvSetD3DInitCallback>("mpv_set_d3d_init_callback");
             SetRaCtxCallback = LoadFunction<MpvSetRaCtxCallback>("mpv_set_ra_ctx_callback");
 			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
+            SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
         }
 
 		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class
