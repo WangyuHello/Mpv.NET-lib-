@@ -824,10 +824,21 @@ namespace Mpv.NET.Player
 			IsPlaying = false;
 		}
 
-		/// <summary>
-		/// Goes to the start of the media file and resumes playback.
-		/// </summary>
-		public async Task RestartAsync()
+        public void StopAsync()
+        {
+            lock (mpvLock)
+            {
+                mpv.CommandAsync(0, "stop");
+            }
+
+            IsMediaLoaded = false;
+            IsPlaying = false;
+        }
+
+        /// <summary>
+        /// Goes to the start of the media file and resumes playback.
+        /// </summary>
+        public async Task RestartAsync()
 		{
 			await SeekAsync(TimeSpan.Zero);
 
