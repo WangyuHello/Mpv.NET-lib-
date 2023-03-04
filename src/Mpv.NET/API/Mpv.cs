@@ -148,6 +148,30 @@ namespace Mpv.NET.API
 			eventLoop.Start();
 		}
 
+		private void RaCtxCallback(IntPtr raCtx, IntPtr wp, IntPtr hp, IntPtr xp, IntPtr yp, IntPtr blp, IntPtr btp, IntPtr brp, IntPtr bbp)
+		{
+            RaCtx = raCtx;
+            Marshal.WriteInt32(wp, _width);
+            Marshal.WriteInt32(hp, _height);
+            var xbits = BitConverter.GetBytes(_scaleX);
+            var xint = BitConverter.ToInt32(xbits);
+            var ybits = BitConverter.GetBytes(_scaleY);
+            var yint = BitConverter.ToInt32(ybits);
+            Marshal.WriteInt32(xp, xint);
+            Marshal.WriteInt32(yp, yint);
+
+            Marshal.WriteInt32(blp, _bounds.X);
+            Marshal.WriteInt32(btp, _bounds.Width);
+            Marshal.WriteInt32(brp, _bounds.Y);
+            Marshal.WriteInt32(bbp, _bounds.Height);
+        }
+
+		private int _width;
+		private int _height;
+		private float _scaleX;
+		private float _scaleY;
+		private Rectangle _bounds;
+
 		private void InitialiseMpv(int width = 0, int height = 0, float scaleX = 0, float scaleY = 0, Rectangle bounds = default)
 		{
 			Handle = Functions.Create();
@@ -158,23 +182,12 @@ namespace Mpv.NET.API
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 
-			Functions.SetRaCtxCallback((ptr, wp, hp, xp, yp, blp, btp, brp, bbp) =>
-			{
-				RaCtx = ptr;
-				Marshal.WriteInt32(wp, width); 
-				Marshal.WriteInt32(hp, height);
-                var xbits = BitConverter.GetBytes(scaleX);
-				var xint = BitConverter.ToInt32(xbits);
-                var ybits = BitConverter.GetBytes(scaleY);
-                var yint = BitConverter.ToInt32(ybits);
-                Marshal.WriteInt32(xp, xint);
-				Marshal.WriteInt32(yp, yint);
-
-                Marshal.WriteInt32(blp, bounds.X);
-                Marshal.WriteInt32(btp, bounds.Width);
-                Marshal.WriteInt32(brp, bounds.Y);
-                Marshal.WriteInt32(bbp, bounds.Height);
-            });
+			_width = width;
+			_height = height;
+			_scaleX = scaleX;
+			_scaleY = scaleY;
+			_bounds = bounds;
+			Functions.SetRaCtxCallback(RaCtxCallback);
 		}
 
 		private unsafe void InitialiseMpvRender()
