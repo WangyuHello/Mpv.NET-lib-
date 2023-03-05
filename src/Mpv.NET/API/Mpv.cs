@@ -150,20 +150,27 @@ namespace Mpv.NET.API
 
 		private void RaCtxCallback(IntPtr raCtx, IntPtr wp, IntPtr hp, IntPtr xp, IntPtr yp, IntPtr blp, IntPtr btp, IntPtr brp, IntPtr bbp)
 		{
-            RaCtx = raCtx;
-            Marshal.WriteInt32(wp, _width);
-            Marshal.WriteInt32(hp, _height);
-            var xbits = BitConverter.GetBytes(_scaleX);
-            var xint = BitConverter.ToInt32(xbits);
-            var ybits = BitConverter.GetBytes(_scaleY);
-            var yint = BitConverter.ToInt32(ybits);
-            Marshal.WriteInt32(xp, xint);
-            Marshal.WriteInt32(yp, yint);
+			try
+			{
+                RaCtx = raCtx;
+                Marshal.WriteInt32(wp, _width);
+                Marshal.WriteInt32(hp, _height);
+                var xbits = BitConverter.GetBytes(_scaleX);
+                var xint = BitConverter.ToInt32(xbits);
+                var ybits = BitConverter.GetBytes(_scaleY);
+                var yint = BitConverter.ToInt32(ybits);
+                Marshal.WriteInt32(xp, xint);
+                Marshal.WriteInt32(yp, yint);
 
-            Marshal.WriteInt32(blp, _bounds.X);
-            Marshal.WriteInt32(btp, _bounds.Width);
-            Marshal.WriteInt32(brp, _bounds.Y);
-            Marshal.WriteInt32(bbp, _bounds.Height);
+                Marshal.WriteInt32(blp, _bounds.X);
+                Marshal.WriteInt32(btp, _bounds.Width);
+                Marshal.WriteInt32(brp, _bounds.Y);
+                Marshal.WriteInt32(bbp, _bounds.Height);
+            }
+			catch (Exception)
+			{
+
+			}
         }
 
 		private int _width;
