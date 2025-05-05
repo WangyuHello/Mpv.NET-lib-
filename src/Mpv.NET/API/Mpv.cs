@@ -1,7 +1,9 @@
 ﻿using Mpv.NET.API.Interop;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Mpv.NET.API
 {
@@ -44,9 +46,22 @@ namespace Mpv.NET.API
 			}
 		}
 
-		private IMpvFunctions functions;
+        public IntPtr RaCtx
+        {
+            get => raCtx;
+            private set
+            {
+                if (value == IntPtr.Zero)
+                    throw new ArgumentException("Invalid handle pointer.", nameof(raCtx));
+
+                raCtx = value;
+            }
+        }
+
+        private IMpvFunctions functions;
 		private IMpvEventLoop eventLoop;
 		private IntPtr handle;
+		private IntPtr raCtx;
 
 		private bool disposed = false;
 
@@ -58,7 +73,7 @@ namespace Mpv.NET.API
 
 			InitialiseMpv();
 
-			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
+            eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
 			eventLoop.Start();
 		}
 
@@ -78,6 +93,9 @@ namespace Mpv.NET.API
 			EventLoop = eventLoop;
 
 			InitialiseMpv();
+
+			eventLoop = new MpvEventLoop(EventCallback, Handle, Functions);
+			eventLoop.Start();
 		}
 
 		internal Mpv(IntPtr handle, IMpvFunctions functions)
@@ -99,9 +117,63 @@ namespace Mpv.NET.API
 			var error = Functions.Initialise(Handle);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
+
+			Functions.SetD3DInitCallback(D3DInitCallback);
+			Functions.SetRaCtxCallback(RaCtxCallback);
+        }
+
+		private void RaCtxCallback(IntPtr raCtx, IntPtr wp, IntPtr hp, IntPtr xp, IntPtr yp, IntPtr blp, IntPtr btp, IntPtr brp, IntPtr bbp)
+		{
+            RaCtx = raCtx;
+
+			MpvVideoGeometryInitEventArgs args = new();
+			VideoGeometryInit?.Invoke(this, args);
+
+            try
+            {
+                RaCtx = raCtx;
+                Marshal.WriteInt32(wp, args.Width);
+                Marshal.WriteInt32(hp, args.Height);
+                var xbits = BitConverter.GetBytes(args.ScaleX);
+                var xint = BitConverter.ToInt32(xbits);
+                var ybits = BitConverter.GetBytes(args.ScaleY);
+                var yint = BitConverter.ToInt32(ybits);
+                Marshal.WriteInt32(xp, xint);
+                Marshal.WriteInt32(yp, yint);
+
+                Marshal.WriteInt32(blp, args.Bounds.X);
+                Marshal.WriteInt32(btp, args.Bounds.Width);
+                Marshal.WriteInt32(brp, args.Bounds.Y);
+                Marshal.WriteInt32(bbp, args.Bounds.Height);
+            }
+            catch (Exception)
+            {
+                throw new MpvAPIException("Failed to init geometry");
+            }
+        }
+
+        private void D3DInitCallback(IntPtr device, IntPtr swapchain)
+		{
+			SwapChainInited?.Invoke(this, swapchain);
 		}
 
-		public long ClientAPIVersion()
+        public void SetPanelSize(int width, int height)
+		{
+			if (RaCtx != IntPtr.Zero)
+			{
+                Functions.SetPanelSize(RaCtx, width, height);
+            }
+        }
+
+        public void SetPanelScale(float scaleX, float scaleY)
+        {
+            if (RaCtx != IntPtr.Zero)
+            {
+                Functions.SetPanelScale(RaCtx, scaleX, scaleY);
+            }
+        }
+
+        public long ClientAPIVersion()
 		{
 			Guard.AgainstDisposed(disposed, nameof(Mpv));
 
@@ -205,8 +277,10 @@ namespace Mpv.NET.API
 
 			try
 			{
-				var error = Functions.Command(Handle, argsPtr);
-				if (error != MpvError.Success)
+				//var error = Functions.Command(Handle, argsPtr);
+				var error = MpvFuntionsStatic.MpvCommand(Handle, argsPtr);
+
+                if (error != MpvError.Success)
 					throw MpvAPIException.FromError(error, Functions);
 			}
 			finally
@@ -257,8 +331,9 @@ namespace Mpv.NET.API
 			{
 				Marshal.Copy(data, 0, dataPtr, dataLength);
 
-				var error = Functions.SetProperty(Handle, name, format, dataPtr);
-				if (error != MpvError.Success)
+				//var error = Functions.SetProperty(Handle, name, format, dataPtr);
+				var error = MpvFuntionsStatic.MpvSetProperty(Handle, name, format, dataPtr);
+                if (error != MpvError.Success)
 					throw MpvAPIException.FromError(error, Functions);
 			}
 			finally
@@ -273,7 +348,8 @@ namespace Mpv.NET.API
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(name, nameof(name));
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(value, nameof(value));
 
-			var error = Functions.SetPropertyString(Handle, name, value);
+			//var error = Functions.SetPropertyString(Handle, name, value);
+			var error = MpvFuntionsStatic.MpvSetPropertyString(Handle, name, value);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 		}

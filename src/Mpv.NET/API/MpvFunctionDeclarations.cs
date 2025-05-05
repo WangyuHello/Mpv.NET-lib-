@@ -28,7 +28,7 @@ namespace Mpv.NET.API
 	public delegate MpvError MpvInitialise(IntPtr mpvHandle);
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	public delegate void MpvDetachDestroy(IntPtr mpvHandle);
+	public delegate void MpvDestroy(IntPtr mpvHandle);
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void MpvTerminateDestroy(IntPtr mpvHandle);
@@ -193,4 +193,44 @@ namespace Mpv.NET.API
 	// Other
 
 	public delegate void MpvWakeupCallback(IntPtr d);
+
+    public delegate void MpvD3dInitFn(IntPtr d3d11Device, IntPtr swapChain);
+    public delegate void MpvRaCtxFn(IntPtr raCtx, IntPtr width, IntPtr height, IntPtr scalex, IntPtr scaley, IntPtr bounds_left, IntPtr bounds_top, IntPtr bounds_right, IntPtr bounds_bottom);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetD3DInitCallback(MpvD3dInitFn callback);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetRaCtxCallback(MpvRaCtxFn callback);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetPanelSize(IntPtr raCtx, int width, int height);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int MpvSetPanelScale(IntPtr raCtx, float scaleX, float scaleY);
+
+	public static class MpvFuntionsStatic
+	{
+        [DllImport("mpv-2.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_command")]
+		[SuppressGCTransition]
+        public static extern MpvError MpvCommand(IntPtr mpvHandle, IntPtr args);
+
+        [DllImport("mpv-2.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property")]
+		[SuppressGCTransition]
+        public static extern MpvError MpvSetProperty(
+            IntPtr mpvHandle,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
+        string name,
+            MpvFormat format,
+            IntPtr data);
+
+        [DllImport("mpv-2.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property_string")]
+		[SuppressGCTransition]
+        public static extern MpvError MpvSetPropertyString(
+            IntPtr mpvHandle,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
+        string name,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
+        string data);
+    }
 }

@@ -10,7 +10,7 @@ namespace Mpv.NET.API
 		MpvClientName ClientName						{ get; }
 		MpvCreate Create								{ get; }
 		MpvInitialise Initialise						{ get; }
-		MpvDetachDestroy DetachDestroy					{ get; }
+		MpvDestroy Destroy					            { get; }
 		MpvTerminateDestroy TerminateDestroy			{ get; }
 		MpvCreateClient CreateClient					{ get; }
 		MpvLoadConfigFile LoadConfigFile				{ get; }
@@ -39,5 +39,10 @@ namespace Mpv.NET.API
 
 		MpvGetPropertyDouble GetPropertyDouble			{ get; }
 		MpvGetPropertyLong GetPropertyLong				{ get; }
+
+		MpvSetD3DInitCallback SetD3DInitCallback { get; }
+		MpvSetRaCtxCallback SetRaCtxCallback { get; }
+		MpvSetPanelSize SetPanelSize { get; }
+		MpvSetPanelScale SetPanelScale { get; }
 	}
 }

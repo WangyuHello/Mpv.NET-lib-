@@ -11,7 +11,7 @@ namespace Mpv.NET.API
 		public MpvClientName ClientName						{ get; private set; }
 		public MpvCreate Create								{ get; private set; }
 		public MpvInitialise Initialise						{ get; private set; }
-		public MpvDetachDestroy DetachDestroy				{ get; private set; }
+		public MpvDestroy Destroy						    { get; private set; }
 		public MpvTerminateDestroy TerminateDestroy			{ get; private set; }
 		public MpvCreateClient CreateClient					{ get; private set; }
 		public MpvLoadConfigFile LoadConfigFile				{ get; private set; }
@@ -42,7 +42,13 @@ namespace Mpv.NET.API
 		public MpvGetPropertyDouble GetPropertyDouble		{ get; private set; }
 		public MpvGetPropertyLong GetPropertyLong			{ get; private set; }
 
-		private IntPtr dllHandle;
+		// For composition swapchain
+		public MpvSetD3DInitCallback SetD3DInitCallback           { get; private set; }
+		public MpvSetRaCtxCallback SetRaCtxCallback { get; private set; }
+		public MpvSetPanelSize SetPanelSize { get; private set; }
+		public MpvSetPanelScale SetPanelScale { get; private set; }
+
+        private IntPtr dllHandle;
 
 		private bool disposed = false;
 
@@ -64,41 +70,46 @@ namespace Mpv.NET.API
 
 		private void LoadFunctions()
 		{
-			ClientAPIVersion		= LoadFunction<MpvClientAPIVersion>("mpv_client_api_version");
-			ErrorString				= LoadFunction<MpvErrorString>("mpv_error_string");
-			Free					= LoadFunction<MpvFree>("mpv_free");
-			ClientName				= LoadFunction<MpvClientName>("mpv_client_name");
-			Create					= LoadFunction<MpvCreate>("mpv_create");
-			Initialise				= LoadFunction<MpvInitialise>("mpv_initialize");
-			DetachDestroy			= LoadFunction<MpvDetachDestroy>("mpv_detach_destroy");
-			TerminateDestroy		= LoadFunction<MpvTerminateDestroy>("mpv_terminate_destroy");
-			CreateClient			= LoadFunction<MpvCreateClient>("mpv_create_client");
-			LoadConfigFile			= LoadFunction<MpvLoadConfigFile>("mpv_load_config_file");
-			GetTimeUs				= LoadFunction<MpvGetTimeUs>("mpv_get_time_us");
-			SetOption				= LoadFunction<MpvSetOption>("mpv_set_option");
-			SetOptionString			= LoadFunction<MpvSetOptionString>("mpv_set_option_string");
-			Command					= LoadFunction<MpvCommand>("mpv_command");
-			CommandAsync			= LoadFunction<MpvCommandAsync>("mpv_command_async");
-			SetProperty				= LoadFunction<MpvSetProperty>("mpv_set_property");
-			SetPropertyString		= LoadFunction<MpvSetPropertyString>("mpv_set_property_string");
-			SetPropertyAsync		= LoadFunction<MpvSetPropertyAsync>("mpv_set_property_async");
-			GetProperty				= LoadFunction<MpvGetProperty>("mpv_get_property");
-			GetPropertyString		= LoadFunction<MpvGetPropertyString>("mpv_get_property_string");
-			GetPropertyOSDString	= LoadFunction<MpvGetPropertyOSDString>("mpv_get_property_osd_string");
-			GetPropertyAsync		= LoadFunction<MpvGetPropertyAsync>("mpv_get_property_async");
-			ObserveProperty			= LoadFunction<MpvObserveProperty>("mpv_observe_property");
-			UnobserveProperty		= LoadFunction<MpvUnobserveProperty>("mpv_unobserve_property");
-			EventName				= LoadFunction<MpvEventName>("mpv_event_name");
-			RequestEvent			= LoadFunction<MpvRequestEvent>("mpv_request_event");
-			RequestLogMessages		= LoadFunction<MpvRequestLogMessages>("mpv_request_log_messages");
-			WaitEvent				= LoadFunction<MpvWaitEvent>("mpv_wait_event");
-			Wakeup					= LoadFunction<MpvWakeup>("mpv_wakeup");
-			SetWakeupCallback		= LoadFunction<MpvSetWakeupCallback>("mpv_set_wakeup_callback");
-			GetWakeupPipe			= LoadFunction<MpvGetWakeupPipe>("mpv_get_wakeup_pipe");
-			WaitAsyncRequests		= LoadFunction<MpvWaitAsyncRequests>("mpv_wait_async_requests");
+			ClientAPIVersion = LoadFunction<MpvClientAPIVersion>("mpv_client_api_version");
+			ErrorString = LoadFunction<MpvErrorString>("mpv_error_string");
+			Free = LoadFunction<MpvFree>("mpv_free");
+			ClientName = LoadFunction<MpvClientName>("mpv_client_name");
+			Create = LoadFunction<MpvCreate>("mpv_create");
+			Initialise = LoadFunction<MpvInitialise>("mpv_initialize");
+			Destroy = LoadFunction<MpvDestroy>("mpv_destroy");
+			TerminateDestroy = LoadFunction<MpvTerminateDestroy>("mpv_terminate_destroy");
+			CreateClient = LoadFunction<MpvCreateClient>("mpv_create_client");
+			LoadConfigFile = LoadFunction<MpvLoadConfigFile>("mpv_load_config_file");
+			GetTimeUs = LoadFunction<MpvGetTimeUs>("mpv_get_time_us");
+			SetOption = LoadFunction<MpvSetOption>("mpv_set_option");
+			SetOptionString = LoadFunction<MpvSetOptionString>("mpv_set_option_string");
+			Command = LoadFunction<MpvCommand>("mpv_command");
+			CommandAsync = LoadFunction<MpvCommandAsync>("mpv_command_async");
+			SetProperty = LoadFunction<MpvSetProperty>("mpv_set_property");
+			SetPropertyString = LoadFunction<MpvSetPropertyString>("mpv_set_property_string");
+			SetPropertyAsync = LoadFunction<MpvSetPropertyAsync>("mpv_set_property_async");
+			GetProperty = LoadFunction<MpvGetProperty>("mpv_get_property");
+			GetPropertyString = LoadFunction<MpvGetPropertyString>("mpv_get_property_string");
+			GetPropertyOSDString = LoadFunction<MpvGetPropertyOSDString>("mpv_get_property_osd_string");
+			GetPropertyAsync = LoadFunction<MpvGetPropertyAsync>("mpv_get_property_async");
+			ObserveProperty = LoadFunction<MpvObserveProperty>("mpv_observe_property");
+			UnobserveProperty = LoadFunction<MpvUnobserveProperty>("mpv_unobserve_property");
+			EventName = LoadFunction<MpvEventName>("mpv_event_name");
+			RequestEvent = LoadFunction<MpvRequestEvent>("mpv_request_event");
+			RequestLogMessages = LoadFunction<MpvRequestLogMessages>("mpv_request_log_messages");
+			WaitEvent = LoadFunction<MpvWaitEvent>("mpv_wait_event");
+			Wakeup = LoadFunction<MpvWakeup>("mpv_wakeup");
+			SetWakeupCallback = LoadFunction<MpvSetWakeupCallback>("mpv_set_wakeup_callback");
+			GetWakeupPipe = LoadFunction<MpvGetWakeupPipe>("mpv_get_wakeup_pipe");
+			WaitAsyncRequests = LoadFunction<MpvWaitAsyncRequests>("mpv_wait_async_requests");
 
-			GetPropertyDouble		= LoadFunction<MpvGetPropertyDouble>("mpv_get_property");
-			GetPropertyLong			= LoadFunction<MpvGetPropertyLong>("mpv_get_property");
+			GetPropertyDouble = LoadFunction<MpvGetPropertyDouble>("mpv_get_property");
+			GetPropertyLong = LoadFunction<MpvGetPropertyLong>("mpv_get_property");
+
+			SetD3DInitCallback = LoadFunction<MpvSetD3DInitCallback>("mpv_set_d3d_init_callback");
+			SetRaCtxCallback = LoadFunction<MpvSetRaCtxCallback>("mpv_set_ra_ctx_callback");
+			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
+			SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
 		}
 
 		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class

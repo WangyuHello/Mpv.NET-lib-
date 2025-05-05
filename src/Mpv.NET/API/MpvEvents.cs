@@ -48,7 +48,10 @@ namespace Mpv.NET.API
 
 		public event EventHandler QueueOverflow;
 
-		private void EventCallback(MpvEvent @event)
+		public event EventHandler<MpvVideoGeometryInitEventArgs> VideoGeometryInit;
+		public event EventHandler<IntPtr> SwapChainInited;
+
+        private void EventCallback(MpvEvent @event)
 		{
 			var eventId = @event.ID;
 			switch (eventId)

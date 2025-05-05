@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -250,10 +251,17 @@ namespace Mpv.NET.Player
 				if (!IsMediaLoaded)
 					return TimeSpan.Zero;
 
-				double duration;
+				double duration = 0;
 				lock (mpvLock)
 				{
-					duration = mpv.GetPropertyDouble("duration");
+					try
+					{
+                        duration = mpv.GetPropertyDouble("duration");
+                    }
+                    catch (Exception)
+					{
+
+					}
 				}
 
 				return TimeSpan.FromSeconds(duration);
@@ -464,8 +472,9 @@ namespace Mpv.NET.Player
 
 		private readonly string[] possibleLibMpvPaths = new string[]
 		{
-			"mpv-1.dll",
-			@"lib\mpv-1.dll"
+			"mpv-2.dll",
+			@"lib\mpv-2.dll",
+			@"NativeLibs\mpv-2.dll"
 		};
 
 		private readonly string[] possibleYtdlHookPaths = new string[]
@@ -560,20 +569,30 @@ namespace Mpv.NET.Player
 			mpv.ObserveProperty("paused-for-cache", MpvFormat.String, pausedForCacheUserData);
 		}
 
-		private void SetMpvHost(IntPtr hwnd)
+		public void SetMpvHost(IntPtr hwnd)
 		{
 			var playerHostPtrLong = hwnd.ToInt64();
 			mpv.SetPropertyLong("wid", playerHostPtrLong);
 		}
 
-		/// <summary>
-		/// Loads the file at the path into mpv. If called while media is playing, the specified media
-		/// will be appended to the playlist.
-		/// If youtube-dl is enabled, this method can be used to load videos from video sites.
-		/// </summary>
-		/// <param name="path">Path or URL to media source.</param>
-		/// <param name="force">If true, will force load the media replacing any currently playing media.</param>
-		public void Load(string path, bool force = false)
+		public void SetPanelSize(int width, int height)
+		{
+			mpv.SetPanelSize(width, height);
+		}
+
+        public void SetPanelScale(float scaleX, float scaleY)
+        {
+            mpv.SetPanelScale(scaleX, scaleY);
+        }
+
+        /// <summary>
+        /// Loads the file at the path into mpv. If called while media is playing, the specified media
+        /// will be appended to the playlist.
+        /// If youtube-dl is enabled, this method can be used to load videos from video sites.
+        /// </summary>
+        /// <param name="path">Path or URL to media source.</param>
+        /// <param name="force">If true, will force load the media replacing any currently playing media.</param>
+        public void Load(string path, bool force = false)
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(path, nameof(path));
 
@@ -591,6 +610,27 @@ namespace Mpv.NET.Player
 
 				var loadMethodString = LoadMethodHelper.ToString(loadMethod);
 				mpv.Command("loadfile", path, loadMethodString);
+			}
+		}
+
+		public void LoadAsync(string path, bool force = false)
+        {
+			Guard.AgainstNullOrEmptyOrWhiteSpaceString(path, nameof(path));
+
+			lock (mpvLock)
+			{
+				mpv.SetPropertyString("pause", AutoPlay ? "no" : "yes");
+
+				var loadMethod = LoadMethod.Replace;
+
+				// If there is media already playing, we append
+				// the desired video onto the playlist.
+				// (Unless force is true.)
+				if (IsPlaying && !force)
+					loadMethod = LoadMethod.Append;
+
+				var loadMethodString = LoadMethodHelper.ToString(loadMethod);
+				mpv.CommandAsync(0, "loadfile", path, loadMethodString);
 			}
 		}
 
@@ -615,7 +655,7 @@ namespace Mpv.NET.Player
 				{
 					var loadMethod = LoadMethod.Append;
 
-					if (first && (!force || !IsPlaying))
+					if (first && (force || !IsPlaying))
 						loadMethod = LoadMethod.Replace;
 
 					var loadMethodString = LoadMethodHelper.ToString(loadMethod);
@@ -697,10 +737,21 @@ namespace Mpv.NET.Player
 			IsPlaying = false;
 		}
 
-		/// <summary>
-		/// Goes to the start of the media file and resumes playback.
-		/// </summary>
-		public async Task RestartAsync()
+        public void StopAsync()
+        {
+            lock (mpvLock)
+            {
+                mpv.CommandAsync(0, "stop");
+            }
+
+            IsMediaLoaded = false;
+            IsPlaying = false;
+        }
+
+        /// <summary>
+        /// Goes to the start of the media file and resumes playback.
+        /// </summary>
+        public async Task RestartAsync()
 		{
 			await SeekAsync(TimeSpan.Zero);
 
@@ -740,11 +791,28 @@ namespace Mpv.NET.Player
 			}
 		}
 
-		/// <summary>
-		/// Go to the previous entry in the playlist.
-		/// </summary>
-		/// <returns>True if successful, false if not. False indicates that there are no entries before the current entry.</returns>
-		public bool PlaylistPrevious()
+        public bool PlaylistPlayIndex(int index)
+        {
+            try
+            {
+                lock (mpvLock)
+                {
+                    mpv.Command("playlist-play-index", $"{index}");
+                }
+
+                return true;
+            }
+            catch (MpvAPIException exception)
+            {
+                return HandleCommandMpvAPIException(exception);
+            }
+        }
+
+        /// <summary>
+        /// Go to the previous entry in the playlist.
+        /// </summary>
+        /// <returns>True if successful, false if not. False indicates that there are no entries before the current entry.</returns>
+        public bool PlaylistPrevious()
 		{
 			try
 			{
