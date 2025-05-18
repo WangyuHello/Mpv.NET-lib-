@@ -569,7 +569,7 @@ namespace Mpv.NET.Player
 			mpv.ObserveProperty("paused-for-cache", MpvFormat.String, pausedForCacheUserData);
 		}
 
-		public void SetMpvHost(IntPtr hwnd)
+        public void SetMpvHost(IntPtr hwnd)
 		{
 			var playerHostPtrLong = hwnd.ToInt64();
 			mpv.SetPropertyLong("wid", playerHostPtrLong);

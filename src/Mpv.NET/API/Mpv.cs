@@ -118,44 +118,9 @@ namespace Mpv.NET.API
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 
-			Functions.SetD3DInitCallback(D3DInitCallback);
-			Functions.SetRaCtxCallback(RaCtxCallback);
+			//Functions.SetD3DInitCallback(D3DInitCallback);
+			//Functions.SetRaCtxCallback(RaCtxCallback);
         }
-
-		private void RaCtxCallback(IntPtr raCtx, IntPtr wp, IntPtr hp, IntPtr xp, IntPtr yp, IntPtr blp, IntPtr btp, IntPtr brp, IntPtr bbp)
-		{
-            RaCtx = raCtx;
-
-			MpvVideoGeometryInitEventArgs args = new();
-			VideoGeometryInit?.Invoke(this, args);
-
-            try
-            {
-                RaCtx = raCtx;
-                Marshal.WriteInt32(wp, args.Width);
-                Marshal.WriteInt32(hp, args.Height);
-                var xbits = BitConverter.GetBytes(args.ScaleX);
-                var xint = BitConverter.ToInt32(xbits);
-                var ybits = BitConverter.GetBytes(args.ScaleY);
-                var yint = BitConverter.ToInt32(ybits);
-                Marshal.WriteInt32(xp, xint);
-                Marshal.WriteInt32(yp, yint);
-
-                Marshal.WriteInt32(blp, args.Bounds.X);
-                Marshal.WriteInt32(btp, args.Bounds.Width);
-                Marshal.WriteInt32(brp, args.Bounds.Y);
-                Marshal.WriteInt32(bbp, args.Bounds.Height);
-            }
-            catch (Exception)
-            {
-                throw new MpvAPIException("Failed to init geometry");
-            }
-        }
-
-        private void D3DInitCallback(IntPtr device, IntPtr swapchain)
-		{
-			SwapChainInited?.Invoke(this, swapchain);
-		}
 
         public void SetPanelSize(int width, int height)
 		{
