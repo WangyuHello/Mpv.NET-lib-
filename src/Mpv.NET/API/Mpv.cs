@@ -1,5 +1,6 @@
 ﻿using Mpv.NET.API.Interop;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -394,9 +395,12 @@ namespace Mpv.NET.API
 
 			var stringPtr = Functions.GetPropertyString(Handle, name);
 			if (stringPtr == IntPtr.Zero)
-				throw new MpvAPIException("Failed to get property string, invalid pointer.");
+			{
+                Debug.WriteLine($"Failed to get property {name}, invalid pointer.");
+				return string.Empty;
+            }
 
-			try
+            try
 			{
 				return MpvMarshal.GetManagedUTF8StringFromPtr(stringPtr);
 			}
