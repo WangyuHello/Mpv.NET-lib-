@@ -473,9 +473,10 @@ namespace Mpv.NET.Player
 		private readonly string[] possibleLibMpvPaths = new string[]
 		{
 			"mpv-2.dll",
-			@"lib\mpv-2.dll",
-			@"NativeLibs\mpv-2.dll"
-		};
+			"libmpv-2.so",
+            @"lib\mpv-2.dll",
+            @"lib\libmpv-2.so"
+        };
 
 		private readonly string[] possibleYtdlHookPaths = new string[]
 		{
