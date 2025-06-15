@@ -475,7 +475,7 @@ namespace Mpv.NET.Player
 			"mpv.dll",
 			"libmpv.so",
             @"lib\mpv.dll",
-            @"lib\libmpv.so"
+            @"lib/libmpv.so"
         };
 
 		private readonly string[] possibleYtdlHookPaths = new string[]
@@ -544,7 +544,7 @@ namespace Mpv.NET.Player
 
 			// Set defaults.
 			Volume = 50;
-			YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
+			//YouTubeDlVideoQuality = YouTubeDlVideoQuality.Highest;
 
 			// Set the host of the mpv player.
 			if (hwnd != IntPtr.Zero)

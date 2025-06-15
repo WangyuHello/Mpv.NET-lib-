@@ -243,8 +243,8 @@ namespace Mpv.NET.API
 
 			try
 			{
-				//var error = Functions.Command(Handle, argsPtr);
-				var error = MpvFuntionsStatic.MpvCommand(Handle, argsPtr);
+				var error = Functions.Command(Handle, argsPtr);
+				//var error = MpvFuntionsStatic.MpvCommand(Handle, argsPtr);
 
                 if (error != MpvError.Success)
 					throw MpvAPIException.FromError(error, Functions);
@@ -297,8 +297,8 @@ namespace Mpv.NET.API
 			{
 				Marshal.Copy(data, 0, dataPtr, dataLength);
 
-				//var error = Functions.SetProperty(Handle, name, format, dataPtr);
-				var error = MpvFuntionsStatic.MpvSetProperty(Handle, name, format, dataPtr);
+				var error = Functions.SetProperty(Handle, name, format, dataPtr);
+				//var error = MpvFuntionsStatic.MpvSetProperty(Handle, name, format, dataPtr);
                 if (error != MpvError.Success)
 					throw MpvAPIException.FromError(error, Functions);
 			}
@@ -314,8 +314,8 @@ namespace Mpv.NET.API
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(name, nameof(name));
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(value, nameof(value));
 
-			//var error = Functions.SetPropertyString(Handle, name, value);
-			var error = MpvFuntionsStatic.MpvSetPropertyString(Handle, name, value);
+			var error = Functions.SetPropertyString(Handle, name, value);
+			//var error = MpvFuntionsStatic.MpvSetPropertyString(Handle, name, value);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
 		}

@@ -62,14 +62,7 @@ namespace Mpv.NET.API
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
 
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-                dllHandle = WinFunctions.LoadLibrary(dllPath);
-            }
-			else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-				dllHandle = WinFunctions.dlopen(dllPath, WinFunctions.RTLD_GLOBAL + WinFunctions.RTLD_LAZY);
-			}
+            dllHandle = NativeLibrary.Load(dllPath);
 			if (dllHandle == IntPtr.Zero)
 				throw new MpvAPIException("Failed to load Mpv DLL. .NET apps by default are 32-bit so make sure you're loading the 32-bit DLL.");
 		}
@@ -112,9 +105,12 @@ namespace Mpv.NET.API
 			GetPropertyDouble = LoadFunction<MpvGetPropertyDouble>("mpv_get_property");
 			GetPropertyLong = LoadFunction<MpvGetPropertyLong>("mpv_get_property");
 
-			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
-			SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
-		}
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+                SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
+                SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
+            }
+        }
 
 		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class
 		{
@@ -136,14 +132,7 @@ namespace Mpv.NET.API
 			{
 				if (!disposed)
 				{
-					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-					{
-                        WinFunctions.FreeLibrary(dllHandle);
-                    }
-					else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-					{
-						WinFunctions.dlclose(dllHandle);
-					}
+                    NativeLibrary.Free(dllHandle);
                 }
 
 				disposed = true;

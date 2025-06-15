@@ -96,16 +96,7 @@ namespace Mpv.NET.API.Interop
 
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(functionName, nameof(functionName));
 
-			IntPtr functionPtr = IntPtr.Zero;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-                functionPtr = WinFunctions.GetProcAddress(dllHandle, functionName);
-			}
-			else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-				functionPtr = WinFunctions.dlsym(dllHandle, functionName);
-			}
+			var functionPtr = NativeLibrary.GetExport(dllHandle, functionName);
             if (functionPtr == IntPtr.Zero)
 				return null;
 
