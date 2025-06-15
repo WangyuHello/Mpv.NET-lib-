@@ -211,11 +211,11 @@ namespace Mpv.NET.API
 
 	public static class MpvFuntionsStatic
 	{
-        [DllImport("mpv-2", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_command")]
+        [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_command")]
 		[SuppressGCTransition]
         public static extern MpvError MpvCommand(IntPtr mpvHandle, IntPtr args);
 
-        [DllImport("mpv-2", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property")]
+        [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property")]
 		[SuppressGCTransition]
         public static extern MpvError MpvSetProperty(
             IntPtr mpvHandle,
@@ -224,7 +224,7 @@ namespace Mpv.NET.API
             MpvFormat format,
             IntPtr data);
 
-        [DllImport("mpv-2", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property_string")]
+        [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property_string")]
 		[SuppressGCTransition]
         public static extern MpvError MpvSetPropertyString(
             IntPtr mpvHandle,

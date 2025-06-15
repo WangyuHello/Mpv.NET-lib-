@@ -1,5 +1,6 @@
 ﻿using Mpv.NET.API.Interop;
 using System;
+using System.Runtime.InteropServices;
 
 namespace Mpv.NET.API
 {
@@ -63,7 +64,14 @@ namespace Mpv.NET.API
 		{
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(dllPath, nameof(dllPath));
 
-			dllHandle = WinFunctions.LoadLibrary(dllPath);
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+                dllHandle = WinFunctions.LoadLibrary(dllPath);
+            }
+			else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			{
+				dllHandle = WinFunctions.dlopen(dllPath, WinFunctions.RTLD_GLOBAL + WinFunctions.RTLD_LAZY);
+			}
 			if (dllHandle == IntPtr.Zero)
 				throw new MpvAPIException("Failed to load Mpv DLL. .NET apps by default are 32-bit so make sure you're loading the 32-bit DLL.");
 		}
@@ -132,8 +140,15 @@ namespace Mpv.NET.API
 			{
 				if (!disposed)
 				{
-					WinFunctions.FreeLibrary(dllHandle);
-				}
+					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+					{
+                        WinFunctions.FreeLibrary(dllHandle);
+                    }
+					else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+					{
+						WinFunctions.dlclose(dllHandle);
+					}
+                }
 
 				disposed = true;
 			}

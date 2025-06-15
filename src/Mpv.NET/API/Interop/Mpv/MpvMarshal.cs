@@ -96,8 +96,17 @@ namespace Mpv.NET.API.Interop
 
 			Guard.AgainstNullOrEmptyOrWhiteSpaceString(functionName, nameof(functionName));
 
-			var functionPtr = WinFunctions.GetProcAddress(dllHandle, functionName);
-			if (functionPtr == IntPtr.Zero)
+			IntPtr functionPtr = IntPtr.Zero;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+                functionPtr = WinFunctions.GetProcAddress(dllHandle, functionName);
+			}
+			else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			{
+				functionPtr = WinFunctions.dlsym(dllHandle, functionName);
+			}
+            if (functionPtr == IntPtr.Zero)
 				return null;
 
 			return (TDelegate)(object)Marshal.GetDelegateForFunctionPointer(functionPtr, typeof(TDelegate));

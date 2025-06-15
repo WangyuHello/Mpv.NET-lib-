@@ -16,5 +16,17 @@ namespace Mpv.NET.API.Interop
 		// https://docs.microsoft.com/en-us/windows/desktop/api/libloaderapi/nf-libloaderapi-getprocaddress
 		[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi, BestFitMapping = false)]
 		public static extern IntPtr GetProcAddress(IntPtr hModule, string lProcName);
-	}
+
+        public const int RTLD_LAZY = 1;
+        public const int RTLD_GLOBAL = 8;
+
+        [DllImport("libdl.so")]
+        internal static extern IntPtr dlopen(string filename, int flags);
+
+        [DllImport("libdl.so")]
+        internal static extern IntPtr dlclose(IntPtr handle);
+
+        [DllImport("libdl.so")]
+        internal static extern IntPtr dlsym(IntPtr handle, string symbol);
+    }
 }
