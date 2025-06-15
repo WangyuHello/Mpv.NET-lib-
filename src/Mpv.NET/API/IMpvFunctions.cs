@@ -40,8 +40,6 @@ namespace Mpv.NET.API
 		MpvGetPropertyDouble GetPropertyDouble			{ get; }
 		MpvGetPropertyLong GetPropertyLong				{ get; }
 
-		MpvSetD3DInitCallback SetD3DInitCallback { get; }
-		MpvSetRaCtxCallback SetRaCtxCallback { get; }
 		MpvSetPanelSize SetPanelSize { get; }
 		MpvSetPanelScale SetPanelScale { get; }
 	}

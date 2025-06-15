@@ -44,8 +44,6 @@ namespace Mpv.NET.API
 		public MpvGetPropertyLong GetPropertyLong			{ get; private set; }
 
 		// For composition swapchain
-		public MpvSetD3DInitCallback SetD3DInitCallback           { get; private set; }
-		public MpvSetRaCtxCallback SetRaCtxCallback { get; private set; }
 		public MpvSetPanelSize SetPanelSize { get; private set; }
 		public MpvSetPanelScale SetPanelScale { get; private set; }
 
@@ -114,8 +112,6 @@ namespace Mpv.NET.API
 			GetPropertyDouble = LoadFunction<MpvGetPropertyDouble>("mpv_get_property");
 			GetPropertyLong = LoadFunction<MpvGetPropertyLong>("mpv_get_property");
 
-			SetD3DInitCallback = LoadFunction<MpvSetD3DInitCallback>("mpv_set_d3d_init_callback");
-			SetRaCtxCallback = LoadFunction<MpvSetRaCtxCallback>("mpv_set_ra_ctx_callback");
 			SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
 			SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
 		}
