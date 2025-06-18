@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Mpv.NET.Player
@@ -535,8 +536,17 @@ namespace Mpv.NET.Player
 				InitialiseMpv(LibMpvPath);
 			else
 			{
-				var foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
-				if (foundPath != null)
+				string foundPath;
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				{
+					var paths2 = possibleLibMpvPaths.Where(s => s.EndsWith(".so"));
+                    foundPath = paths2.FirstOrDefault(File.Exists);
+				}
+				else
+				{
+                    foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
+                }
+                if (foundPath != null)
 					InitialiseMpv(foundPath);
 				else
 					throw new MpvPlayerException("Failed to find libmpv. Check your path.");
