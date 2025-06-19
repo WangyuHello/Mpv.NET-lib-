@@ -536,16 +536,20 @@ namespace Mpv.NET.Player
 				InitialiseMpv(LibMpvPath);
 			else
 			{
-				string foundPath;
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				string suffix;
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
-					var paths2 = possibleLibMpvPaths.Where(s => s.EndsWith(".so"));
-                    foundPath = paths2.FirstOrDefault(File.Exists);
+					suffix = ".dll";
 				}
 				else
 				{
-                    foundPath = possibleLibMpvPaths.FirstOrDefault(File.Exists);
+					suffix = ".so";
                 }
+
+                var foundPath = possibleLibMpvPaths
+					.Select(p => Path.Combine(AppContext.BaseDirectory,p))
+					.Where(p => p.EndsWith(suffix))
+					.FirstOrDefault(File.Exists);
                 if (foundPath != null)
 					InitialiseMpv(foundPath);
 				else
