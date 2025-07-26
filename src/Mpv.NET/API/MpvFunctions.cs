@@ -48,6 +48,17 @@ namespace Mpv.NET.API
 		public MpvSetPanelSize SetPanelSize { get; private set; }
 		public MpvSetPanelScale SetPanelScale { get; private set; }
 
+		// Render API
+		public MpvRenderContextCreate MpvRenderContextCreate { get; private set; }
+		public MpvRenderContextSetParameter MpvRenderContextSetParameter { get; private set; }
+		public MpvRenderContextGetInfo MpvRenderContextGetInfo { get; private set; }
+		public MpvRenderContextSetUpdateCallback MpvRenderContextSetUpdateCallback { get; private set; }
+		public MpvRenderContextUpdate MpvRenderContextUpdate { get; private set; }
+		public MpvRenderContextRender MpvRenderContextRender { get; private set; }
+		public MpvRenderContextReportSwap MpvRenderContextReportSwap { get; private set; }
+		public MpvRenderContextFree MpvRenderContextFree { get; private set; }
+
+
         private IntPtr dllHandle;
 
 		private bool disposed = false;
@@ -111,9 +122,18 @@ namespace Mpv.NET.API
                 SetPanelSize = LoadFunction<MpvSetPanelSize>("mpv_set_panel_size");
                 SetPanelScale = LoadFunction<MpvSetPanelScale>("mpv_set_panel_scale");
             }
+
+			MpvRenderContextCreate = LoadFunction<MpvRenderContextCreate>("mpv_render_context_create");
+			MpvRenderContextSetParameter = LoadFunction<MpvRenderContextSetParameter>("mpv_render_context_set_parameter");
+			MpvRenderContextGetInfo = LoadFunction<MpvRenderContextGetInfo>("mpv_render_context_get_info");
+            MpvRenderContextSetUpdateCallback = LoadFunction<MpvRenderContextSetUpdateCallback>("mpv_render_context_set_update_callback");
+            MpvRenderContextUpdate = LoadFunction<MpvRenderContextUpdate>("mpv_render_context_update");
+            MpvRenderContextRender = LoadFunction<MpvRenderContextRender>("mpv_render_context_render");
+            MpvRenderContextReportSwap = LoadFunction<MpvRenderContextReportSwap>("mpv_render_context_report_swap");
+            MpvRenderContextFree = LoadFunction<MpvRenderContextFree>("mpv_render_context_free");
         }
 
-		private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class
+        private TDelegate LoadFunction<TDelegate>(string name) where TDelegate : class
 		{
 			var delegateValue = MpvMarshal.LoadUnmanagedFunction<TDelegate>(dllHandle, name);
 			if (delegateValue == null)

@@ -1,14 +1,17 @@
-﻿using Mpv.NET.API.Interop;
+﻿using Mpv.NET.API.Enums;
+using Mpv.NET.API.Interop;
+using Mpv.NET.API.Structs;
 using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Mpv.NET.API
 {
-	public partial class Mpv : IDisposable
+	public unsafe partial class Mpv : IDisposable
 	{
 		public IMpvFunctions Functions
 		{
@@ -59,12 +62,30 @@ namespace Mpv.NET.API
             }
         }
 
+		public MpvRenderContext* RenderCtx
+		{
+            get => renderCtx;
+            private set
+            {
+                if (value == null)
+                    throw new ArgumentException("Invalid handle pointer.", nameof(renderCtx));
+
+                renderCtx = value;
+            }
+        }
+
+		public MpvRenderUpdateFn UpdateCallback { get; set; }
+        public MpvOpenglInitParams_get_proc_addressCallback GetProcAddress { get; set; }
+
         private IMpvFunctions functions;
 		private IMpvEventLoop eventLoop;
 		private IntPtr handle;
 		private IntPtr raCtx;
+		private MpvRenderContext* renderCtx;
+        private MpvOpenglInitParams_get_proc_addressCallback _glGetProcAddress;
+        private MpvRenderUpdateFn _mpvRenderUpdate;
 
-		private bool disposed = false;
+        private bool disposed = false;
 
 		public Mpv(string dllPath)
 		{
@@ -118,9 +139,6 @@ namespace Mpv.NET.API
 			var error = Functions.Initialise(Handle);
 			if (error != MpvError.Success)
 				throw MpvAPIException.FromError(error, Functions);
-
-			//Functions.SetD3DInitCallback(D3DInitCallback);
-			//Functions.SetRaCtxCallback(RaCtxCallback);
         }
 
         public void SetPanelSize(int width, int height)
@@ -137,6 +155,105 @@ namespace Mpv.NET.API
             {
                 Functions.SetPanelScale(RaCtx, scaleX, scaleY);
             }
+        }
+
+
+        public void EnsureRenderContextCreated()
+		{
+			if(renderCtx == null)
+			{
+                _glGetProcAddress = GLGetProcAddress;
+                _mpvRenderUpdate = MPVRenderUpdate;
+
+                var MPV_RENDER_PARAM_API_TYPE_Data = Marshal.StringToHGlobalAnsi("opengl");
+
+                var openglInitParams = new MpvOpenglInitParams
+                {
+                    get_proc_address = _glGetProcAddress,
+                    get_proc_address_ctx = null
+                };
+
+                var MPV_RENDER_PARAM_OPENGL_INIT_PARAMS_Data = Marshal.AllocHGlobal(Marshal.SizeOf<MpvOpenglInitParams>());
+                Marshal.StructureToPtr(openglInitParams, MPV_RENDER_PARAM_OPENGL_INIT_PARAMS_Data, false);
+
+                var parameters = new MpvRenderParam[]
+				{
+                    new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_API_TYPE, data = (void*)MPV_RENDER_PARAM_API_TYPE_Data},
+                    new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, data = (void*)MPV_RENDER_PARAM_OPENGL_INIT_PARAMS_Data},
+                    new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID, data = null}
+				};
+
+
+                try
+                {
+                    MpvRenderContext* content = null;
+                    fixed (MpvRenderParam* ptr = parameters)
+                    {
+                        var result = Functions.MpvRenderContextCreate(&content, handle, ptr);
+                        if (result < 0)
+                            throw new MpvAPIException("Failed to create new client.");
+                    }
+                    RenderCtx = content;
+
+                    Functions.MpvRenderContextSetUpdateCallback(RenderCtx, _mpvRenderUpdate, IntPtr.Zero);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(MPV_RENDER_PARAM_API_TYPE_Data);
+                    Marshal.FreeHGlobal(MPV_RENDER_PARAM_OPENGL_INIT_PARAMS_Data);
+                }
+            }
+		}
+
+        public void ReleaseRenderContext()
+        {
+            if (renderCtx == null) return;
+            Functions.MpvRenderContextFree(renderCtx);
+            renderCtx = null;
+        }
+
+        public void OpenGLRender(int width, int height, int fbo, int format = 0, int flipY = 0)
+        {
+            if (renderCtx == null || disposed) return;
+
+            var fboArray = new MpvOpenglFbo[]
+            {
+                new(){ w = width, h = height, fbo = fbo, internal_format = format },
+            };
+
+            var flipYArray = new int[] { flipY };
+
+            fixed (MpvOpenglFbo* fboPtr = fboArray)
+            {
+                fixed (int* flipYPtr = flipYArray)
+                {
+                    var parameters = new MpvRenderParam[]
+                    {
+                        new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_OPENGL_FBO, data = fboPtr },
+                        new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_FLIP_Y, data = flipYPtr},
+                        new(){ type = MpvRenderParamType.MPV_RENDER_PARAM_INVALID, data = null }
+                    };
+
+                    fixed (MpvRenderParam* renderParamPtr = parameters)
+                    {
+                        var result = Functions.MpvRenderContextRender(renderCtx, renderParamPtr);
+                        if (result < 0)
+                            throw new MpvAPIException("Failed to render.");
+                    }
+                }
+            }
+        }
+
+        private IntPtr GLGetProcAddress(IntPtr ctx, string name)
+        {
+            if (GetProcAddress == null) return IntPtr.Zero;
+            return GetProcAddress(ctx, name);
+        }
+
+        private void MPVRenderUpdate(IntPtr ctx)
+        {
+            if (UpdateCallback == null) return;
+            UpdateCallback(ctx);
         }
 
         public long ClientAPIVersion()

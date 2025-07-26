@@ -1,5 +1,7 @@
 ﻿using Mpv.NET.API.Interop;
+using Mpv.NET.API.Structs;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Mpv.NET.API
@@ -209,28 +211,34 @@ namespace Mpv.NET.API
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MpvSetPanelScale(IntPtr raCtx, float scaleX, float scaleY);
 
-	//public static class MpvFuntionsStatic
-	//{
- //       [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_command")]
-	//	[SuppressGCTransition]
- //       public static extern MpvError MpvCommand(IntPtr mpvHandle, IntPtr args);
+	// Render API
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int MpvRenderContextCreate(MpvRenderContext** res, IntPtr mpv, MpvRenderParam* @params);
 
- //       [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property")]
-	//	[SuppressGCTransition]
- //       public static extern MpvError MpvSetProperty(
- //           IntPtr mpvHandle,
- //           [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
- //       string name,
- //           MpvFormat format,
- //           IntPtr data);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int MpvRenderContextSetParameter(MpvRenderContext* ctx, MpvRenderParam @params);
 
- //       [DllImport("mpv", CallingConvention = CallingConvention.Cdecl, EntryPoint = "mpv_set_property_string")]
-	//	[SuppressGCTransition]
- //       public static extern MpvError MpvSetPropertyString(
- //           IntPtr mpvHandle,
- //           [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
- //       string name,
- //           [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(MpvStringMarshaler), MarshalCookie = "free-com")]
- //       string data);
- //   }
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int MpvRenderContextGetInfo(MpvRenderContext* ctx, MpvRenderParam @params);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MpvRenderContextSetUpdateCallback(MpvRenderContext* ctx, MpvRenderUpdateFn callback, IntPtr callback_ctx);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate ulong MpvRenderContextUpdate(MpvRenderContext* ctx);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int MpvRenderContextRender(MpvRenderContext* ctx, MpvRenderParam* @params);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MpvRenderContextReportSwap(MpvRenderContext* ctx);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MpvRenderContextFree(MpvRenderContext* ctx);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void MpvRenderUpdateFn(IntPtr cb_ctx);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate IntPtr MpvOpenglInitParams_get_proc_addressCallback(IntPtr ctx, [MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 }
